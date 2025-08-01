@@ -10,6 +10,7 @@ import {
   Plus,
   Filter,
   Download,
+  Link,
 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -463,9 +464,10 @@ export default function FinanceDashboard() {
   const menuItems = [
     { id: "dashboard", title: "Dashboard", icon: Home },
     { id: "transacciones", title: "Transacciones", icon: CreditCard },
-    { id: "presupuestos", title: "Presupuestos", icon: Wallet },
-    { id: "reportes", title: "Reportes", icon: TrendingUp },
-    { id: "configuracion", title: "Configuración", icon: Settings },
+    { id: "integraciones", title: "Integraciones", icon: Link },
+    // { id: "presupuestos", title: "Presupuestos", icon: Wallet },
+    // { id: "reportes", title: "Reportes", icon: TrendingUp },
+    // { id: "configuracion", title: "Configuración", icon: Settings },
   ]
 
   const renderContent = () => {
@@ -540,6 +542,8 @@ export default function FinanceDashboard() {
                     onClick={() => {
                       if (item.id === "transacciones") {
                         router.push("/transactions")
+                      } else if (item.id === "integraciones") {
+                        router.push("/integrations")
                       } else {
                         setActiveSection(item.id)
                       }

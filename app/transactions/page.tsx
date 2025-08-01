@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { useTransactions } from '@/hooks/useTransactions'
 import { TransactionFilters } from '@/components/transactions/TransactionFilters'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
+import { MercadoPagoMovements } from '@/components/MercadoPagoMovements'
 import { Database } from '@/types/supabase'
 import DashboardLayout from '@/app/layout-dashboard'
 
@@ -239,6 +240,11 @@ export default function TransactionsPage() {
           }}
           isOpen={showForm || !!editingTransaction}
         />
+
+        {/* Movimientos de Mercado Pago */}
+        <div className="mt-8">
+          <MercadoPagoMovements />
+        </div>
       </div>
     </DashboardLayout>
   )

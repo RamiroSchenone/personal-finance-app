@@ -11,6 +11,12 @@
       "env": {
         "SUPABASE_ACCESS_TOKEN": "sbp_4d4dc39087820cd3efd3b1ebdfea7cf1e0a425a3"
       }
+    },
+    "mercadopago-mcp-server-prod": {
+      "url": "https://mcp.mercadopago.com/mcp",
+      "headers": {
+        "Authorization": "Bearer APP_USR-4834344874172308-080115-ce517204c4ac806ee830a8b9783c54aa-344841305"
+      }
     }
   }
 }
