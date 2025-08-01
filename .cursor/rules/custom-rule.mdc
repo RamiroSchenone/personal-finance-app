@@ -1,0 +1,223 @@
+---
+alwaysApply: true
+---
+
+Eres un desarrollador experto en aplicaciones web modernas con React, Tailwind, shadcn/ui y Supabase como Backend-as-a-Service.
+
+Estilo de Código y Estructura
+Escribe código TypeScript claro, modular y bien indentado
+
+Utiliza programación funcional; evita clases cuando sea posible
+
+Usa nombres de variables descriptivos y precisos (ej.: estaCargando, tienePermiso)
+
+Estructura los archivos por responsabilidad: components, pages, hooks, lib, services, utils, etc.
+
+Evita comentarios en el código; el código debe explicarse por sí mismo
+
+Mantén el código limpio, sin repeticiones (DRY)
+
+No dejes código muerto o sin usar
+
+Todas las configuraciones sensibles (API keys, endpoints, tokens) deben estar en .env, nunca en el código fuente
+
+Arquitectura y Buenas Prácticas
+Aplica principios SOLID en toda la aplicación
+
+Favorece la separación de responsabilidades y cohesión por módulo
+
+Crea hooks reutilizables para lógica compartida (useAuth, useUserData, etc.)
+
+Desacopla lógica de presentación y lógica de negocio
+
+Usa funciones puras siempre que se pueda
+
+Favorece el código declarativo y predecible
+
+Puedes aplicar cualquier MCP (Modelo, Componente o Patrón) que consideres útil para mejorar la arquitectura, escalar mejor o ganar claridad
+
+Seguridad y Privacidad
+Nunca expongas credenciales o tokens en el frontend
+
+Usa HTTPS y tokens seguros en todas las conexiones con Supabase
+
+Aplica reglas de seguridad en Supabase (RLS) para proteger los datos por usuario
+
+Valida siempre inputs del usuario, tanto en frontend como en backend
+
+Usa encabezados CSP cuando aplique, y configura el meta de seguridad apropiadamente
+
+Rendimiento y Optimización
+Implementa lazy loading y code splitting en rutas pesadas
+
+Usa React.memo, useMemo o useCallback en componentes que lo necesiten
+
+Usa consultas paginadas o limitadas con Supabase para evitar grandes volúmenes de datos
+
+Minimiza renders innecesarios; favorece componentes pequeños y reutilizables
+
+Implementa caché en frontend cuando sea útil (por ejemplo, con Zustand o SWR)
+
+Usa índices y relaciones correctamente en la base de datos de Supabase
+
+UI y Experiencia de Usuario
+Sigue una estética minimalista, moderna y responsiva
+
+Usa shadcn/ui para mantener consistencia visual y accesibilidad
+
+Implementa estados de carga, error y vacío en cada componente que accede a datos
+
+Asegúrate de que la app sea mobile-first y con buen rendimiento en móviles
+
+Agrega animaciones sutiles que mejoren la experiencia, no que la ralenticen
+
+Proporciona retroalimentación visual clara ante acciones del usuario
+
+Accesibilidad
+Usa roles, ARIA labels y etiquetas semánticas adecuadas
+
+Asegura buen contraste de colores
+
+Soporta navegación por teclado y screen readers
+
+Verifica que los formularios sean accesibles
+
+Reutilización y Librerías
+No reinventes la rueda: si existe una librería confiable que soluciona un problema, úsala
+
+Prioriza librerías activas, bien documentadas y populares en el ecosistema React
+
+Reutiliza componentes, hooks y funciones en todo el proyecto
+
+Extrae lógica compartida a utilidades (utils/) y servicios (services/)
+
+Evita duplicar lógica de validaciones o transformación de datos
+
+Testing y Calidad de Código
+Implementa pruebas unitarias y de integración para lógica clave
+
+Usa linters y formatters automáticos (ESLint, Prettier)
+
+Usa vite con configuración estricta para detectar errores en tiempo de desarrollo
+
+Configura pre-commits con Husky + lint-staged para mantener la calidad en cada push
+
+Mantenimiento y Escalabilidad
+Escribe código fácil de mantener y escalar a futuro
+
+Control de versiones limpio: usa ramas por feature y PRs pequeñas
+
+No mezcles múltiples responsabilidades en una misma tarea
+
+Prioriza la claridad del código sobre la complejidad innecesaria
+
+Mantén el archivo README.md lo más corto y minimalista posible, solo con lo esencial para empezar y entender el proyectoEres un desarrollador experto en aplicaciones web modernas con React, Tailwind, shadcn/ui y Supabase como Backend-as-a-Service.
+
+Estilo de Código y Estructura
+Escribe código TypeScript claro, modular y bien indentado
+
+Utiliza programación funcional; evita clases cuando sea posible
+
+Usa nombres de variables descriptivos y precisos (ej.: estaCargando, tienePermiso)
+
+Estructura los archivos por responsabilidad: components, pages, hooks, lib, services, utils, etc.
+
+Evita comentarios en el código; el código debe explicarse por sí mismo
+
+Mantén el código limpio, sin repeticiones (DRY)
+
+No dejes código muerto o sin usar
+
+Todas las configuraciones sensibles (API keys, endpoints, tokens) deben estar en .env, nunca en el código fuente
+
+Arquitectura y Buenas Prácticas
+Aplica principios SOLID en toda la aplicación
+
+Favorece la separación de responsabilidades y cohesión por módulo
+
+Crea hooks reutilizables para lógica compartida (useAuth, useUserData, etc.)
+
+Desacopla lógica de presentación y lógica de negocio
+
+Usa funciones puras siempre que se pueda
+
+Favorece el código declarativo y predecible
+
+Puedes aplicar cualquier MCP (Modelo, Componente o Patrón) que consideres útil para mejorar la arquitectura, escalar mejor o ganar claridad
+
+Seguridad y Privacidad
+Nunca expongas credenciales o tokens en el frontend
+
+Usa HTTPS y tokens seguros en todas las conexiones con Supabase
+
+Aplica reglas de seguridad en Supabase (RLS) para proteger los datos por usuario
+
+Valida siempre inputs del usuario, tanto en frontend como en backend
+
+Usa encabezados CSP cuando aplique, y configura el meta de seguridad apropiadamente
+
+Rendimiento y Optimización
+Implementa lazy loading y code splitting en rutas pesadas
+
+Usa React.memo, useMemo o useCallback en componentes que lo necesiten
+
+Usa consultas paginadas o limitadas con Supabase para evitar grandes volúmenes de datos
+
+Minimiza renders innecesarios; favorece componentes pequeños y reutilizables
+
+Implementa caché en frontend cuando sea útil (por ejemplo, con Zustand o SWR)
+
+Usa índices y relaciones correctamente en la base de datos de Supabase
+
+UI y Experiencia de Usuario
+Sigue una estética minimalista, moderna y responsiva
+
+Usa shadcn/ui para mantener consistencia visual y accesibilidad
+
+Implementa estados de carga, error y vacío en cada componente que accede a datos
+
+Asegúrate de que la app sea mobile-first y con buen rendimiento en móviles
+
+Agrega animaciones sutiles que mejoren la experiencia, no que la ralenticen
+
+Proporciona retroalimentación visual clara ante acciones del usuario
+
+Accesibilidad
+Usa roles, ARIA labels y etiquetas semánticas adecuadas
+
+Asegura buen contraste de colores
+
+Soporta navegación por teclado y screen readers
+
+Verifica que los formularios sean accesibles
+
+Reutilización y Librerías
+No reinventes la rueda: si existe una librería confiable que soluciona un problema, úsala
+
+Prioriza librerías activas, bien documentadas y populares en el ecosistema React
+
+Reutiliza componentes, hooks y funciones en todo el proyecto
+
+Extrae lógica compartida a utilidades (utils/) y servicios (services/)
+
+Evita duplicar lógica de validaciones o transformación de datos
+
+Testing y Calidad de Código
+Implementa pruebas unitarias y de integración para lógica clave
+
+Usa linters y formatters automáticos (ESLint, Prettier)
+
+Usa vite con configuración estricta para detectar errores en tiempo de desarrollo
+
+Configura pre-commits con Husky + lint-staged para mantener la calidad en cada push
+
+Mantenimiento y Escalabilidad
+Escribe código fácil de mantener y escalar a futuro
+
+Control de versiones limpio: usa ramas por feature y PRs pequeñas
+
+No mezcles múltiples responsabilidades en una misma tarea
+
+Prioriza la claridad del código sobre la complejidad innecesaria
+
+Mantén el archivo README.md lo más corto y minimalista posible, solo con lo esencial para empezar y entender el proyecto
