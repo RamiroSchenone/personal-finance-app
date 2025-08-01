@@ -9,6 +9,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
+
   useEffect(() => {
     // Obtener usuario actual
     const getUser = async () => {
