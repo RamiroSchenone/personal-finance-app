@@ -12,13 +12,24 @@ import {
   Download,
 } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
+import { LogoutButton } from "@/components/ui/LogoutButton"
+import { UserInfo } from "@/components/ui/UserInfo"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection"
+import { useDashboardStats } from "@/hooks/useDashboardStats"
+import { useTransactionsList } from "@/hooks/useTransactionsList"
+import { useEffect } from "react"
+import { CurrentBalance } from "@/components/dashboard/CurrentBalance"
+import { ExpenseDistribution } from "@/components/dashboard/ExpenseDistribution"
+import { BudgetProgress } from "@/components/dashboard/BudgetProgress"
+import { RecentTransactions } from "@/components/dashboard/RecentTransactions"
 
 // Componente para el gráfico de torta
 function PieChart({
@@ -165,99 +176,106 @@ const transacciones = [
   { fecha: "08/1/2024", descripcion: "Cine", categoria: "Entretenimiento", monto: -25.0, tipo: "gasto" },
 ]
 
-const gastosDistribucion = [
-  { name: "Alimentación", value: 450, color: "#3b82f6" },
-  { name: "Transporte", value: 280, color: "#8b5cf6" },
-  { name: "Entretenimiento", value: 150, color: "#06b6d4" },
-  { name: "Salud", value: 120, color: "#10b981" },
-]
 
-const presupuestos = [
-  { categoria: "Alimentación", presupuesto: 500, gastado: 450, porcentaje: 90 },
-  { categoria: "Transporte", presupuesto: 300, gastado: 280, porcentaje: 93 },
-  { categoria: "Entretenimiento", presupuesto: 200, gastado: 150, porcentaje: 75 },
-  { categoria: "Salud", presupuesto: 150, gastado: 120, porcentaje: 80 },
-]
 
 // Componentes de contenido para cada sección
 function DashboardContent() {
+  const { stats, loading, error, refreshStats } = useDashboardStats()
+
+  // Cargar estadísticas solo cuando se accede al dashboard
+  useEffect(() => {
+    refreshStats()
+  }, []) // Solo ejecutar una vez al montar el componente
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Cargando estadísticas...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 dark:text-red-400 mb-4">Error al cargar las estadísticas</p>
+            <p className="text-gray-600 dark:text-gray-400">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* Saldo Actual */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white rounded-2xl p-8 hover:shadow-2xl dark:hover:shadow-blue-500/25 transition-all duration-300 hover:-translate-y-1">
-        <div className="flex items-center gap-3 mb-4">
-          <DollarSign className="w-6 h-6" />
-          <h3 className="text-xl font-semibold">Saldo Actual</h3>
-        </div>
-        <p className="text-5xl font-bold mb-3">$3,247.85</p>
-        <p className="text-blue-100 flex items-center gap-2">
-          <ArrowUpRight className="w-4 h-4" />
-          +2.5% desde el mes pasado
-        </p>
-      </div>
+      <CurrentBalance stats={stats} />
 
       {/* Grid de contenido principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 hover:shadow-lg dark:hover:shadow-gray-700/25 transition-all duration-300 hover:-translate-y-1">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-6">Distribución de Gastos - Enero</h3>
-          <div className="flex justify-center">
-            <PieChart data={gastosDistribucion} size={180} />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 hover:shadow-lg dark:hover:shadow-gray-700/25 transition-all duration-300 hover:-translate-y-1">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-6">Presupuesto Mensual</h3>
-          <div className="flex flex-col items-center gap-6">
-            <ProgressRing percentage={68} />
-            <div className="text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">$1,360 de $2,000</p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Quedan $640 disponibles</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 hover:shadow-lg dark:hover:shadow-gray-700/25 transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center gap-3 mb-6">
-            <CreditCard className="w-5 h-5" />
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Transacciones Recientes</h3>
-          </div>
-          <div className="space-y-4">
-            {transacciones.slice(0, 5).map((transaccion, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors duration-200 cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      transaccion.tipo === "ingreso" ? "bg-green-500" : "bg-red-500"
-                    } transition-transform duration-200 group-hover:scale-125`}
-                  />
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{transaccion.descripcion}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{transaccion.fecha}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p
-                    className={`font-semibold text-sm ${
-                      transaccion.monto > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {transaccion.monto > 0 ? "+" : ""}${Math.abs(transaccion.monto).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{transaccion.categoria}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ExpenseDistribution stats={stats} />
+        <BudgetProgress stats={stats} />
+        <RecentTransactions stats={stats} />
       </div>
     </div>
   )
 }
 
 function TransaccionesContent() {
+  const { 
+    transactions, 
+    loading, 
+    error, 
+    isInitialized,
+    loadTransactions 
+  } = useTransactionsList()
+
+  // Cargar transacciones solo cuando se accede a esta página
+  useEffect(() => {
+    if (!isInitialized) {
+      loadTransactions()
+    }
+  }, [isInitialized]) // Removemos loadTransactions de las dependencias
+
+  if (loading && !isInitialized) {
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Todas las Transacciones</h2>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Cargando transacciones...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Todas las Transacciones</h2>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 dark:text-red-400 mb-4">Error al cargar las transacciones</p>
+            <p className="text-gray-600 dark:text-gray-400">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -266,10 +284,6 @@ function TransaccionesContent() {
           <Button variant="outline" size="sm" className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
             <Filter className="w-4 h-4 mr-2" />
             Filtrar
-          </Button>
-          <Button variant="outline" size="sm" className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
           </Button>
           <Button size="sm">
             <Plus className="w-4 h-4 mr-2" />
@@ -290,30 +304,37 @@ function TransaccionesContent() {
               </tr>
             </thead>
             <tbody>
-              {transacciones.map((transaccion, index) => (
-                <tr
-                  key={index}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                >
-                  <td className="py-4 font-medium text-gray-900 dark:text-gray-100">{transaccion.fecha}</td>
-                  <td className="py-4 text-gray-900 dark:text-gray-100">{transaccion.descripcion}</td>
-                  <td className="py-4">
-                    <Badge
-                      variant={transaccion.categoria === "Ingresos" ? "default" : "secondary"}
-                      className="text-xs hover:scale-105 transition-transform duration-200"
-                    >
-                      {transaccion.categoria}
-                    </Badge>
-                  </td>
-                  <td
-                    className={`py-4 text-right font-semibold ${
-                      transaccion.monto > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {transaccion.monto > 0 ? "+" : ""}${Math.abs(transaccion.monto).toFixed(2)}
+              {transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                    No hay transacciones registradas
                   </td>
                 </tr>
-              ))}
+              ) : (
+                transactions.map((transaction) => (
+                  <tr key={transaction.id} className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                    <td className="py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {new Date(transaction.date).toLocaleDateString('es-ES')}
+                    </td>
+                    <td className="py-4 font-medium text-gray-900 dark:text-gray-100">
+                      {transaction.description}
+                    </td>
+                    <td className="py-4">
+                      <Badge
+                        variant={transaction.category === "Ingresos" ? "default" : "secondary"}
+                        className="text-xs hover:scale-105 transition-transform duration-200"
+                      >
+                        {transaction.category}
+                      </Badge>
+                    </td>
+                    <td className="py-4 text-right">
+                      <span className={`font-semibold ${transaction.amount > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                        {transaction.amount > 0 ? "+" : ""}${Math.abs(transaction.amount).toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -437,6 +458,7 @@ function ConfiguracionContent() {
 
 export default function FinanceDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard")
+  const router = useRouter()
 
   const menuItems = [
     { id: "dashboard", title: "Dashboard", icon: Home },
@@ -464,6 +486,7 @@ export default function FinanceDashboard() {
   }
 
   return (
+    <ProtectedRoute>
     <>
       <style jsx global>{`
         @keyframes fadeInScale {
@@ -514,7 +537,13 @@ export default function FinanceDashboard() {
               {menuItems.map((item) => (
                 <li key={item.id}>
                   <button
-                    onClick={() => setActiveSection(item.id)}
+                    onClick={() => {
+                      if (item.id === "transacciones") {
+                        router.push("/transactions")
+                      } else {
+                        setActiveSection(item.id)
+                      }
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                       activeSection === item.id
                         ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
@@ -529,8 +558,16 @@ export default function FinanceDashboard() {
             </ul>
           </nav>
 
+          {/* Footer del sidebar con información del usuario, logout y toggle de tema */}
           <div className="p-6">
-            <ThemeToggle />
+            <div className="space-y-4">
+              <UserInfo />
+              <LogoutButton />
+              <ThemeToggle />
+              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                FinanceApp v1.0
+              </div>
+            </div>
           </div>
         </div>
 
@@ -546,5 +583,6 @@ export default function FinanceDashboard() {
         </div>
       </div>
     </>
+    </ProtectedRoute>
   )
 }

@@ -1,8 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
-export function useTheme() {
+interface ThemeContextType {
+  isDark: boolean
+  toggleTheme: () => void
+  mounted: boolean
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -42,10 +50,17 @@ export function useTheme() {
     }
   }
 
-  // Evitar hidratación incorrecta
-  if (!mounted) {
-    return { isDark: false, toggleTheme, mounted }
-  }
+  return (
+    <ThemeContext.Provider value={{ isDark, toggleTheme, mounted }}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
 
-  return { isDark, toggleTheme, mounted }
+export function useThemeContext() {
+  const context = useContext(ThemeContext)
+  if (context === undefined) {
+    throw new Error('useThemeContext must be used within a ThemeProvider')
+  }
+  return context
 } 
