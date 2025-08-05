@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClientAsync } from '@/lib/supabase/server'
-import { getUserInfo } from '@/lib/mercadopago'
+import { getUserTransactions } from '@/lib/mercadopago'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const offset = parseInt(searchParams.get('offset') || '0')
+
     // Obtener el usuario actual
     const supabase = await createClientAsync()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -29,21 +33,25 @@ export async function GET() {
       }, { status: 404 })
     }
 
-    // Obtener información del usuario usando el helper
-    const userInfo = await getUserInfo(tokenData.user_id)
+    // Obtener transacciones usando el helper
+    const transactionsData = await getUserTransactions(tokenData.user_id, limit, offset)
 
-    if (!userInfo) {
+    if (!transactionsData) {
       return NextResponse.json({ 
-        error: 'No se pudo obtener información del usuario de Mercado Pago',
+        error: 'No se pudo obtener transacciones de Mercado Pago',
         details: 'El token puede haber expirado o ser inválido',
-        code: 'USER_INFO_ERROR'
+        code: 'TRANSACTIONS_ERROR'
       }, { status: 404 })
     }
 
-    return NextResponse.json(userInfo)
+    return NextResponse.json({
+      payments: transactionsData.transactions,
+      total: transactionsData.total,
+      paging: transactionsData.paging
+    })
 
   } catch (error) {
-    console.error('Error en /api/mercadopago/user:', error)
+    console.error('Error en /api/mercadopago/payments:', error)
     return NextResponse.json({ 
       error: 'Error interno del servidor',
       details: error instanceof Error ? error.message : 'Error desconocido',

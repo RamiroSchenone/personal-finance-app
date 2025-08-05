@@ -1,31 +1,12 @@
-// Servicio para integración con Mercado Pago
-export interface MercadoPagoConfig {
-  accessToken: string
-  clientId: string
-  clientSecret: string
-}
-
-export interface MercadoPagoAuthResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
-  scope: string
-  user_id: number
-  refresh_token: string
-}
-
-export interface MercadoPagoToken {
+export interface MercadoPagoPayment {
   id: string
-  user_id: string
-  access_token: string
-  refresh_token: string | null
-  token_type: string
-  expires_in: number
-  scope: string
-  user_id_mp: number
-  created_at: string
-  updated_at: string
-  expires_at: string
+  transaction_amount: number
+  description?: string
+  date_created: string
+  status?: string
+  payment_type_id?: string
+  payment_method_id?: string
+  external_reference?: string
 }
 
 export interface MercadoPagoUser {
@@ -36,160 +17,31 @@ export interface MercadoPagoUser {
   last_name: string
 }
 
+export interface MercadoPagoConfig {
+  clientId: string
+  clientSecret: string
+  redirectUri: string
+}
+
 class MercadoPagoService {
   private config: MercadoPagoConfig | null = null
-  private authToken: string | null = null
-  private supabase: any = null
 
   constructor() {
     this.initializeConfig()
-    this.initializeSupabase()
-  }
-
-  private initializeSupabase() {
-    // Importar dinámicamente para evitar problemas de SSR
-    if (typeof window !== 'undefined') {
-      import('@/lib/supabase/client').then(({ createClient }) => {
-        this.supabase = createClient()
-      })
-    }
   }
 
   private initializeConfig() {
-    // Solo necesitamos CLIENT_ID y CLIENT_SECRET para OAuth2
     const clientId = process.env.NEXT_PUBLIC_MERCADOPAGO_CLIENT_ID
     const clientSecret = process.env.NEXT_PUBLIC_MERCADOPAGO_CLIENT_SECRET
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const redirectUri = `${baseUrl}/api/mercadopago/callback`
 
-    if (!clientId || !clientSecret) {
-      console.warn('MercadoPago: Configuración incompleta')
-      return
-    }
-
-    this.config = {
-      accessToken: '', // No necesitamos access token global
-      clientId,
-      clientSecret
-    }
-  }
-
-  // Obtener URL de autorización para conectar cuenta de Mercado Pago
-  getAuthorizationUrl(): string {
-    if (!this.config) {
-      throw new Error('MercadoPago: Configuración no disponible')
-    }
-
-    // Usar URL de callback configurable o fallback a la actual
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
-    const redirectUri = `${baseUrl}/integrations/mercadopago/callback`
-    const scope = 'read write'
-    
-    console.log('=== URL DE AUTORIZACIÓN ===')
-    console.log('Base URL:', baseUrl)
-    console.log('Redirect URI:', redirectUri)
-    console.log('URL completa:', `https://auth.mercadopago.com.ar/authorization?client_id=${this.config.clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}`)
-    
-    return `https://auth.mercadopago.com.ar/authorization?client_id=${this.config.clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}`
-  }
-
-  // Intercambiar código de autorización por token de acceso
-  async exchangeCodeForToken(code: string, userId: string): Promise<MercadoPagoAuthResponse> {
-    console.log('=== EXCHANGE CODE FOR TOKEN ===')
-    console.log('Código:', code)
-    console.log('UserId:', userId)
-    
-    const requestBody = JSON.stringify({ code })
-    console.log('Request body:', requestBody)
-    
-    const response = await fetch('/api/mercadopago/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: requestBody
-    })
-
-    console.log('Response status:', response.status)
-    console.log('Response ok:', response.ok)
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Error response:', errorText)
-      const error = JSON.parse(errorText)
-      throw new Error(error.error || 'Error al obtener token')
-    }
-
-    const result = await response.json()
-    console.log('Response result:', result)
-    
-    // Simular la respuesta de Mercado Pago para compatibilidad
-    const mockResponse = {
-      access_token: 'mock_token', // No necesitamos el token real en el cliente
-      token_type: 'Bearer',
-      expires_in: 3600,
-      scope: 'read write',
-      user_id: 0,
-      refresh_token: 'mock_refresh'
-    }
-    
-    this.authToken = mockResponse.access_token
-    return mockResponse
-  }
-
-
-
-  // Obtener información del usuario autenticado
-  async getUserInfo(): Promise<MercadoPagoUser> {
-    const response = await fetch('/api/mercadopago/user')
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Error al obtener información del usuario')
-    }
-
-    return await response.json()
-  }
-
-  // Verificar si el usuario está autenticado
-  async isAuthenticated(userId?: string): Promise<boolean> {
-    if (this.authToken) return true
-    
-    if (!userId) return false
-
-    try {
-      console.log('Verificando autenticación para usuario:', userId)
-      const response = await fetch('/api/mercadopago/user')
-      const isOk = response.ok
-      console.log('Verificación de autenticación:', { userId, isOk })
-      
-      if (isOk) {
-        const userData = await response.json()
-        console.log('Usuario de Mercado Pago:', userData)
+    if (clientId && clientSecret) {
+      this.config = {
+        clientId,
+        clientSecret,
+        redirectUri
       }
-      
-      return isOk
-    } catch (error) {
-      console.error('Error verificando autenticación:', error)
-      return false
-    }
-  }
-
-
-
-  // Obtener token de acceso
-  getAuthToken(): string | null {
-    return this.authToken
-  }
-
-  // Cerrar sesión
-  async logout(userId?: string): Promise<void> {
-    this.authToken = null
-    
-    try {
-      await fetch('/api/mercadopago/logout', {
-        method: 'POST'
-      })
-    } catch (error) {
-      console.error('Error eliminando token:', error)
     }
   }
 
@@ -198,39 +50,89 @@ class MercadoPagoService {
     return this.config !== null
   }
 
-  // Obtener movimientos de Mercado Pago
-  async getMovements(limit: number = 50, offset: number = 0): Promise<any> {
+  // Obtener URL de autorización
+  getAuthorizationUrl(): string {
+    if (!this.config) {
+      throw new Error('Configuración de Mercado Pago no disponible')
+    }
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: this.config.clientId,
+      redirect_uri: this.config.redirectUri,
+      scope: 'read write'
+    })
+
+    return `https://auth.mercadopago.com.ar/authorization?${params.toString()}`
+  }
+
+  // Iniciar proceso de autenticación (redirigir a la página de login)
+  authenticate(): void {
+    const authUrl = this.getAuthorizationUrl()
+    window.location.href = authUrl
+  }
+
+  // Obtener información del usuario usando MCP
+  async getUserInfo(): Promise<MercadoPagoUser> {
     try {
-      console.log('=== OBTENIENDO MOVIMIENTOS ===')
-      console.log('Limit:', limit, 'Offset:', offset)
-      let response = await fetch(`/api/mercadopago/movements?limit=${limit}&offset=${offset}`)
-      if (response.status === 401) {
-        // Intentar refresh automático
-        const refreshRes = await fetch('/api/mercadopago/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ grant_type: 'refresh_token' })
-        })
-        if (refreshRes.ok) {
-          // Reintentar la request
-          response = await fetch(`/api/mercadopago/movements?limit=${limit}&offset=${offset}`)
-        } else {
-          throw new Error('Token expirado. Reautenticación requerida.')
-        }
+      const response = await fetch('/api/mercadopago/user')
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al obtener información del usuario')
       }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error obteniendo información del usuario:', error)
+      throw error
+    }
+  }
+
+  // Obtener pagos usando MCP
+  async getPayments(limit: number = 50, offset: number = 0): Promise<{
+    payments: MercadoPagoPayment[]
+    total: number
+    paging: any
+  }> {
+    try {
+      const response = await fetch(`/api/mercadopago/payments?limit=${limit}&offset=${offset}`)
+      
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Error al obtener movimientos')
+        throw new Error(error.error || 'Error al obtener pagos')
       }
+
       const data = await response.json()
-      console.log('Movimientos obtenidos:', {
-        total: data.total,
-        count: data.movements?.length || 0
-      })
-      return data
+      return {
+        payments: data.payments || [],
+        total: data.total || 0,
+        paging: data.paging || {}
+      }
     } catch (error) {
-      console.error('Error obteniendo movimientos:', error)
+      console.error('Error obteniendo pagos:', error)
       throw error
+    }
+  }
+
+  // Verificar si el usuario está autenticado
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      const response = await fetch('/api/mercadopago/user')
+      return response.ok
+    } catch {
+      return false
+    }
+  }
+
+  // Cerrar sesión
+  async logout(): Promise<void> {
+    try {
+      await fetch('/api/mercadopago/logout', {
+        method: 'POST'
+      })
+    } catch (error) {
+      console.error('Error cerrando sesión:', error)
     }
   }
 }

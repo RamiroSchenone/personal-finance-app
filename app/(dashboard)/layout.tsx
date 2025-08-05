@@ -1,12 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Home, Settings, CreditCard, TrendingUp, Wallet } from 'lucide-react'
+import { Home, Settings, CreditCard, TrendingUp, Wallet, Link } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { LogoutButton } from '@/components/ui/LogoutButton'
 import { UserInfo } from '@/components/ui/UserInfo'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+
+interface MenuItem {
+  id: string
+  title: string
+  icon: React.ComponentType<{ className?: string }>
+  path: string
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -15,24 +22,28 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [activeSection, setActiveSection] = useState(() => {
-    if (pathname === '/') return 'dashboard'
-    if (pathname === '/transactions') return 'transacciones'
-    if (pathname === '/budgets') return 'presupuestos'
-    if (pathname === '/reports') return 'reportes'
-    if (pathname === '/settings') return 'configuracion'
-    return 'dashboard'
-  })
+  const [activeSection, setActiveSection] = useState('dashboard')
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { id: "dashboard", title: "Dashboard", icon: Home, path: "/" },
     { id: "transacciones", title: "Transacciones", icon: CreditCard, path: "/transactions" },
+    { id: "integraciones", title: "Integraciones", icon: Link, path: "/integrations" },
     { id: "presupuestos", title: "Presupuestos", icon: Wallet, path: "/budgets" },
     { id: "reportes", title: "Reportes", icon: TrendingUp, path: "/reports" },
     { id: "configuracion", title: "Configuración", icon: Settings, path: "/settings" },
   ]
 
-  const handleNavigation = (item: any) => {
+  // Actualizar la sección activa basada en el pathname
+  useEffect(() => {
+    if (pathname === '/') setActiveSection('dashboard')
+    else if (pathname === '/transactions') setActiveSection('transacciones')
+    else if (pathname === '/integrations') setActiveSection('integraciones')
+    else if (pathname === '/budgets') setActiveSection('presupuestos')
+    else if (pathname === '/reports') setActiveSection('reportes')
+    else if (pathname === '/settings') setActiveSection('configuracion')
+  }, [pathname])
+
+  const handleNavigation = (item: MenuItem) => {
     setActiveSection(item.id)
     router.push(item.path)
   }

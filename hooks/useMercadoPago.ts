@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { mercadoPagoService, MercadoPagoUser } from '@/services/mercadopago'
-import { useAuthContext } from '@/contexts/AuthContext'
+import { mercadoPagoService, MercadoPagoUser, MercadoPagoPayment } from '@/services/mercadopago'
 
 export interface MercadoPagoState {
   isConfigured: boolean
@@ -10,31 +9,26 @@ export interface MercadoPagoState {
   isLoading: boolean
   error: string | null
   user: MercadoPagoUser | null
-  movements: any[]
-  movementsLoading: boolean
+  payments: MercadoPagoPayment[]
+  paymentsLoading: boolean
 }
 
 export function useMercadoPago() {
-  const { user } = useAuthContext()
   const [state, setState] = useState<MercadoPagoState>({
     isConfigured: false,
     isAuthenticated: false,
     isLoading: true,
     error: null,
     user: null,
-    movements: [],
-    movementsLoading: false
+    payments: [],
+    paymentsLoading: false
   })
 
   // Inicializar estado
   useEffect(() => {
     const initializeState = async () => {
-      console.log('Inicializando estado de Mercado Pago:', { userId: user?.id })
-      
       const isConfigured = mercadoPagoService.isConfigured()
-      const isAuthenticated = user ? await mercadoPagoService.isAuthenticated(user.id) : false
-      
-      console.log('Estado inicial:', { isConfigured, isAuthenticated })
+      const isAuthenticated = await mercadoPagoService.isAuthenticated()
       
       setState(prev => ({
         ...prev,
@@ -43,33 +37,15 @@ export function useMercadoPago() {
         isLoading: false
       }))
 
-      // Si está autenticado, obtener información del usuario y movimientos
+      // Si está autenticado, obtener información del usuario y pagos
       if (isAuthenticated) {
         loadUserInfo()
-        loadMovements()
+        loadPayments()
       }
     }
 
     initializeState()
-
-    // Listener para detectar cuando el usuario regresa de la autorización
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
-      
-      if (event.data.type === 'MERCADOPAGO_AUTH_SUCCESS') {
-        const { code } = event.data
-        processCallback(code)
-      } else if (event.data.type === 'MERCADOPAGO_AUTH_ERROR') {
-        setState(prev => ({
-          ...prev,
-          error: event.data.error || 'Error en la autorización'
-        }))
-      }
-    }
-
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [user])
+  }, [])
 
   // Cargar información del usuario
   const loadUserInfo = async () => {
@@ -84,31 +60,68 @@ export function useMercadoPago() {
         isLoading: false
       }))
     } catch (error) {
+      let errorMessage = 'Error al cargar información del usuario'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      // Manejar errores específicos de autorización
+      if (errorMessage.includes('NO_TOKEN_FOUND')) {
+        errorMessage = 'No tienes una integración activa con Mercado Pago. Debes autorizar la conexión primero.'
+      } else if (errorMessage.includes('TOKEN_EXPIRED')) {
+        errorMessage = 'Tu sesión de Mercado Pago ha expirado. Debes renovar la autorización.'
+      } else if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('403')) {
+        errorMessage = 'Acceso denegado por políticas de Mercado Pago. Verifica que tu aplicación tenga los permisos correctos.'
+      } else if (errorMessage.includes('TOKEN_INVALID') || errorMessage.includes('401')) {
+        errorMessage = 'Token de acceso inválido. Debes reautenticarte con Mercado Pago.'
+      }
+      
       setState(prev => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Error al cargar información del usuario',
-        isLoading: false
+        error: errorMessage,
+        isLoading: false,
+        isAuthenticated: false
       }))
     }
   }
 
-  // Cargar movimientos de Mercado Pago
-  const loadMovements = async () => {
+  // Cargar pagos de Mercado Pago
+  const loadPayments = async () => {
     try {
-      setState(prev => ({ ...prev, movementsLoading: true, error: null }))
+      setState(prev => ({ ...prev, paymentsLoading: true, error: null }))
       
-      const data = await mercadoPagoService.getMovements(50, 0)
+      const data = await mercadoPagoService.getPayments(50, 0)
       
       setState(prev => ({
         ...prev,
-        movements: data.movements || [],
-        movementsLoading: false
+        payments: data.payments || [],
+        paymentsLoading: false
       }))
     } catch (error) {
+      let errorMessage = 'Error al cargar pagos'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      // Manejar errores específicos de autorización
+      if (errorMessage.includes('NO_TOKEN_FOUND')) {
+        errorMessage = 'No tienes una integración activa con Mercado Pago. Debes autorizar la conexión primero.'
+      } else if (errorMessage.includes('TOKEN_EXPIRED')) {
+        errorMessage = 'Tu sesión de Mercado Pago ha expirado. Debes renovar la autorización.'
+      } else if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('403')) {
+        errorMessage = 'Acceso denegado por políticas de Mercado Pago. Verifica que tu aplicación tenga los permisos correctos.'
+      } else if (errorMessage.includes('TOKEN_INVALID') || errorMessage.includes('401')) {
+        errorMessage = 'Token de acceso inválido. Debes reautenticarte con Mercado Pago.'
+      } else if (errorMessage.includes('ENDPOINT_NOT_FOUND') || errorMessage.includes('404')) {
+        errorMessage = 'El endpoint de pagos no está disponible. Verifica la configuración de la API.'
+      }
+      
       setState(prev => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Error al cargar movimientos',
-        movementsLoading: false
+        error: errorMessage,
+        paymentsLoading: false
       }))
     }
   }
@@ -116,8 +129,8 @@ export function useMercadoPago() {
   // Iniciar proceso de autenticación
   const authenticate = () => {
     try {
-      const authUrl = mercadoPagoService.getAuthorizationUrl()
-      window.open(authUrl, '_blank', 'width=600,height=700,scrollbars=yes,resizable=yes')
+      setState(prev => ({ ...prev, error: null }))
+      mercadoPagoService.authenticate()
     } catch (error) {
       setState(prev => ({
         ...prev,
@@ -126,48 +139,17 @@ export function useMercadoPago() {
     }
   }
 
-  // Procesar callback de autorización
-  const processCallback = async (code: string) => {
-    if (!user) {
-      setState(prev => ({
-        ...prev,
-        error: 'Usuario no autenticado',
-        isLoading: false
-      }))
-      return
-    }
-
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }))
-      
-      await mercadoPagoService.exchangeCodeForToken(code, user.id)
-      
-      setState(prev => ({
-        ...prev,
-        isAuthenticated: true,
-        isLoading: false
-      }))
-
-      // Cargar información del usuario
-      await loadUserInfo()
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : 'Error al procesar autorización',
-        isLoading: false
-      }))
-    }
-  }
-
   // Cerrar sesión
   const logout = async () => {
-    await mercadoPagoService.logout(user?.id)
+    await mercadoPagoService.logout()
     setState({
       isConfigured: mercadoPagoService.isConfigured(),
       isAuthenticated: false,
       isLoading: false,
       error: null,
-      user: null
+      user: null,
+      payments: [],
+      paymentsLoading: false
     })
   }
 
@@ -179,9 +161,8 @@ export function useMercadoPago() {
   return {
     ...state,
     authenticate,
-    processCallback,
     logout,
     clearError,
-    loadMovements
+    loadPayments
   }
 } 
